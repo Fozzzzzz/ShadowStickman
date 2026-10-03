@@ -18,6 +18,7 @@
   --hand: "Iansui", "LXGW WenKai TC", "Klee One", "Kaiti TC", "BiauKai", "DFKai-SB", cursive;
   --body: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "Heiti TC", system-ui, sans-serif;
   --wob: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --pb: 66px;          /* touch button size */
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -34,6 +35,7 @@
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+html { padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
 body { margin: 0; background: var(--paper); color: var(--text); font-family: var(--body); font-size: 15px; line-height: 1.65; }
 .page { max-width: 900px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 44px; display: flex; flex-direction: column; gap: 12px; }
 
@@ -76,11 +78,10 @@ canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; }
 .trace { margin: 0; font-family: var(--hand); font-size: 16px; color: var(--muted); min-height: 1.65em; }
 .trace b { font-weight: 400; color: var(--shade); font-variant-numeric: tabular-nums; }
 
-.pad { display: none; justify-content: space-between; gap: 12px; user-select: none; -webkit-user-select: none; }
-.pad .grp { display: grid; grid-template-columns: repeat(2, 64px); gap: 10px; align-content: end; }
-.pb { height: 58px; font-family: var(--hand); font-size: 20px; color: var(--text); background: var(--panel); border: 2px solid var(--text); border-radius: var(--wob); touch-action: none; -webkit-tap-highlight-color: transparent; }
+.pad { display: none; justify-content: space-between; align-items: flex-end; gap: 12px; user-select: none; -webkit-user-select: none; }
+.pad .grp { display: grid; grid-template-columns: repeat(2, var(--pb)); gap: 10px; }
+.pb { height: var(--pb); padding: 0; font-family: var(--hand); font-size: 21px; color: var(--text); background: var(--panel); border: 2px solid var(--text); border-radius: var(--wob); touch-action: none; -webkit-tap-highlight-color: transparent; }
 .pb.on { background: var(--ink); color: var(--panel); border-color: var(--ink); }
-@media (pointer: coarse) { .pad { display: flex; } .keys { display: none; } }
 
 .keys { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 6px 20px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
 .keys li { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
@@ -92,6 +93,36 @@ kbd { font-family: var(--hand); font-size: 15px; line-height: 1.3; min-width: 26
 .notes p { margin: 0; max-width: 62ch; color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) { .btn, .bar i { transition: none; } }
+
+/* Phones and tablets: the whole game is one screen. Upright, the buttons sit at the bottom edge under the thumbs;
+   sideways, they move into the gutters beside the fight and the panel shrinks to the height that is left. */
+@media (pointer: coarse) {
+  html, body { height: 100%; }
+  body { touch-action: manipulation; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .page { min-height: 100%; max-width: 640px; gap: 8px; padding-block: 8px 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .tag, .keys, .notes { display: none; }
+  .top { flex-wrap: nowrap; align-items: center; justify-content: space-between; }
+  h1 { font-size: 24px; }
+  .marks { font-size: 14px; } .grade b { font-size: 16px; }
+  .trace { font-size: 14px; }
+  .pad { display: flex; margin-top: auto; }
+  .card { gap: 5px; } .card h2 { font-size: 22px; } .card p { font-size: 14px; line-height: 1.35; }
+  .btn { font-size: 17px; padding: 3px 18px 4px; margin-top: 2px; }
+}
+@media (pointer: coarse) and (orientation: landscape) {
+  :root { --pb: 60px; }
+  .page { height: 100%; max-width: none; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "left hud right" "left stage right"; gap: 4px 14px; padding-block: 6px; }
+  .top, .trace { display: none; }
+  .hud { grid-area: hud; }
+  .side .name { font-size: 14px; } .bar { height: 12px; } .mid .rd { font-size: 12px; } .mid .clock { font-size: 22px; }
+  .stage { grid-area: stage; container-type: size; min-width: 0; min-height: 0; display: grid; place-items: start center; }
+  .arena { width: min(100%, (100vh - 84px) * 16 / 9); width: min(100cqw, (100cqh - 6px) * 16 / 9); }
+  .pad { display: contents; }
+  .pad .grp:first-child { grid-area: left; align-self: end; }
+  .pad .grp:last-child { grid-area: right; align-self: end; }
+  .banner { font-size: clamp(28px, 12vh, 64px); }
+}
+
 </style>
 
 <main class="page">
@@ -121,6 +152,7 @@ kbd { font-family: var(--hand); font-size: 15px; line-height: 1.3; min-width: 26
     </div>
   </section>
 
+  <div class="stage">
   <div class="arena" id="arena">
     <canvas id="cv" width="960" height="540" aria-label="對戰畫面"></canvas>
     <div class="banner" id="banner" hidden></div>
@@ -133,6 +165,7 @@ kbd { font-family: var(--hand); font-size: 15px; line-height: 1.3; min-width: 26
       </div>
     </div>
   </div>
+  </div>
 
   <p class="trace" id="trace">影子還沒有東西可學。</p>
 
@@ -140,10 +173,10 @@ kbd { font-family: var(--hand); font-size: 15px; line-height: 1.3; min-width: 26
     <div class="grp">
       <button class="pb" type="button" data-bit="64" aria-label="往左">◀</button>
       <button class="pb" type="button" data-bit="128" aria-label="往右">▶</button>
-      <button class="pb" type="button" data-bit="4">跳</button>
-      <button class="pb" type="button" data-bit="32">擋</button>
     </div>
     <div class="grp">
+      <button class="pb" type="button" data-bit="4">跳</button>
+      <button class="pb" type="button" data-bit="32">擋</button>
       <button class="pb" type="button" data-bit="8">拳</button>
       <button class="pb" type="button" data-bit="16">踢</button>
     </div>
